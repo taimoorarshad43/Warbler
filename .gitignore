@@ -8,3 +8,4 @@
 *cert.*
 *key.*
 .env
+original_requirements.txt
