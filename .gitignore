@@ -1,0 +1,10 @@
+*venv*
+*pycache*
+*backup*
+*notes*
+*key*
+*consumer_examples*
+*testinggrounds*
+*cert.*
+*key.*
+.env
