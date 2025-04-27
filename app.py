@@ -9,20 +9,23 @@ from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
 
-app = Flask(__name__)
+# Refactoring to use application factory pattern
+def create_app():
 
-# Get DB_URI from environ variable (useful for production/testing) or,
-# if not set there, use development local db.
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+    app = Flask(__name__)
+    connect_db(app)
+
+    return app
+
+app = create_app()
+
+# Database URI is set in models.py as per Flask 3's specifications
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 toolbar = DebugToolbarExtension(app)
-
-connect_db(app)
 
 
 ##############################################################################

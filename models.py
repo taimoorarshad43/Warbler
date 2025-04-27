@@ -1,12 +1,26 @@
 """SQLAlchemy models for Warbler."""
 
 from datetime import datetime
+import os
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
+
+def connect_db(app):
+    """Connect this database to provided Flask app.
+
+    You should call this in your Flask app.
+    """
+    # Get DB_URI from environ variable (useful for production/testing) or,
+# if not set there, use development local db.
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+
+    db.app = app
+    db.init_app(app)
 
 
 class Follows(db.Model):
@@ -200,11 +214,4 @@ class Message(db.Model):
     user = db.relationship('User')
 
 
-def connect_db(app):
-    """Connect this database to provided Flask app.
 
-    You should call this in your Flask app.
-    """
-
-    db.app = app
-    db.init_app(app)
