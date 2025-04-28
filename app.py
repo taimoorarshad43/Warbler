@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -116,12 +116,12 @@ def login():
 def logout():
     """Handle logout of user."""
 
+    # IMPLEMENT THIS
+
     do_logout()
 
     flash("You have successfully logged out.", "success")
     return redirect("/login")
-
-    # IMPLEMENT THIS
 
 
 ##############################################################################
@@ -217,9 +217,48 @@ def stop_following(follow_id):
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
-    """Update profile for current user."""
+    """Update profile for current user. Will check to see if user has the correct password"""
 
     # IMPLEMENT THIS
+
+    if not g.user:                              # If user is not logged in, redirect to login page
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    usereditform = UserEditForm()
+
+    password = usereditform.password.data
+    username = usereditform.username.data
+    email = usereditform.email.data
+    image_url = usereditform.image_url.data
+    header_image_url = usereditform.header_image_url.data
+    bio = usereditform.bio.data
+
+    user = User.query.get(g.user.id)         # Get the current user from the database
+    authusername = user.username
+
+    if usereditform.validate_on_submit():       # Handles our POST requests when form is submitted and checks user password
+
+        validuser = User.authenticate(authusername,
+                                 password)
+        if not validuser:
+            flash("Invalid credentials.", 'danger')
+            return redirect("/")
+        
+        # This needs to be changed to have optional fields for image_url fields
+
+        user.username = username
+        user.email = email
+        user.image_url = image_url or User.image_url.default.arg
+        user.header_image_url = header_image_url
+        user.bio = bio
+
+        db.session.commit()
+        flash("Profile updated successfully.", "success")
+        return redirect(f"/users/{user.id}")
+    else:
+        return render_template('users/edit.html', form=usereditform, user=user)
+
 
 
 @app.route('/users/delete', methods=["POST"])
