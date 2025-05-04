@@ -235,6 +235,25 @@ def add_like(message_id):
     db.session.commit()
     return redirect("/")
 
+@app.route('/users/<int:userid>/likes')
+def show_likes(userid):
+    """Show list of messages liked by the current user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = User.query.get_or_404(userid)  # Get the user by ID
+
+    messages = user.likes
+
+    for message in messages:
+        print("Message ID: ", message.id)
+        print("Message Text: ", message.text)
+        print("Message User ID: ", message.user.id)
+
+    return render_template('users/likes.html', messages=messages)
+
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user. Will check to see if user has the correct password"""
