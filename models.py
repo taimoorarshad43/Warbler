@@ -108,7 +108,7 @@ class User(db.Model):
         nullable=False,
     )
 
-    messages = db.relationship('Message')
+    messages = db.relationship('Message',cascade="all, delete-orphan")
 
     followers = db.relationship(
         "User",
