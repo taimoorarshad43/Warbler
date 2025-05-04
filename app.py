@@ -116,7 +116,7 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS
+    # IMPLEMENT THIS - DONE
 
     do_logout()
 
@@ -215,11 +215,31 @@ def stop_following(follow_id):
     return redirect(f"/users/{g.user.id}/following")
 
 
+@app.route('/users/add_like/<int:message_id>', methods=['POST'])
+def add_like(message_id):
+    """Have currently-logged-in-user like this message.
+    
+    If message is already liked, remove the like."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    liked_message = Message.query.get_or_404(message_id)
+
+    if liked_message in g.user.likes:            # Check if the message is already liked
+        g.user.likes.remove(liked_message)       # If it is, remove the like. Else add the like
+    else:
+        g.user.likes.append(liked_message)
+
+    db.session.commit()
+    return redirect("/")
+
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user. Will check to see if user has the correct password"""
 
-    # IMPLEMENT THIS
+    # IMPLEMENT THIS - DONE
 
     if not g.user:                              # If user is not logged in, redirect to login page
         flash("Access unauthorized.", "danger")
@@ -245,7 +265,7 @@ def profile():
             flash("Invalid credentials.", 'danger')
             return redirect("/")
         
-        # This needs to be changed to have optional fields for image_url fields
+        # This needs to be changed to have optional fields for image_url fields - DONE
 
         user.username = username
         user.email = email
@@ -336,6 +356,8 @@ def homepage():
 
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
+
+    Also takes in likes
     """
 
     if g.user:
@@ -357,7 +379,21 @@ def homepage():
             .limit(100)
             .all())
 
-        return render_template('home.html', messages=messages)
+        likes = (g.user.likes)                      # Get the likes of the current user
+
+        likes = [like.id for like in likes]        # Get the ids of the likes
+
+        for like in likes:
+            print("Like ID: ", like)
+
+        for message in messages:
+            if message.id in likes:
+                print("Message ID: ", message.id)
+            else:
+                print("Message ID: ", message.id, "not in likes")
+            
+
+        return render_template('home.html', messages=messages, likes = likes)
 
     else:
         return render_template('home-anon.html')
