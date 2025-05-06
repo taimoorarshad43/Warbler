@@ -17,7 +17,7 @@ def connect_db(app):
     # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
     app.config['SQLALCHEMY_DATABASE_URI'] = (
-        os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+        os.environ.get('DATABASE_URL', database_uri))
 
     db.app = app
     db.init_app(app)

@@ -10,10 +10,10 @@ from models import db, connect_db, User, Message, Follows
 CURR_USER_KEY = "curr_user"
 
 # Refactoring to use application factory pattern
-def create_app():
+def create_app(database_uri='postgresql:///warbler'):
 
     app = Flask(__name__)
-    connect_db(app)
+    connect_db(app, database_uri)
 
     return app
 
