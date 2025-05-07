@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
-def connect_db(app):
+def connect_db(app, database_uri):
     """Connect this database to provided Flask app.
 
     You should call this in your Flask app.

@@ -20,13 +20,31 @@ os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
 # Now we can import app
 
-from app import app
+from app import create_app
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
 
-db.create_all()
+
+# Will need to refactor some base code to use Flask 3
+
+# Creating new app instance with test database URI
+app = create_app("postgressql:///warbler-test")
+
+# Configuring app in a similar way to how it would be in production
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = False
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
+
+# Disable some of Flasks error behavior and disabling debugtoolbar. Disabling CSRF token.
+app.config['TESTING'] = True
+app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
+app.config['WTF_CSRF_ENABLED'] = False
+
+with app.app_context():
+    db.create_all()
 
 
 class UserModelTestCase(TestCase):
