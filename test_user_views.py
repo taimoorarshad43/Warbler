@@ -76,8 +76,8 @@ class MessageViewTestCase(TestCase):
                                         image_url=None)
 
             # Setting up diifferent followers and following for test user
-            self.testuser.following.append(self.testfollower)
-            self.testfollower.following.append(self.testuser)
+            self.testuser.following.append(self.testfollowing)
+            self.testuser.followers.append(self.testfollower)
 
             db.session.commit()
     
@@ -107,8 +107,54 @@ class MessageViewTestCase(TestCase):
 
         with self.client as c:
 
+            resp = c.get("/users/1/followers", follow_redirects=True)
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Access unauthorized", data)
+
+    def test_loggedout_see_following(self):
+        """We should not be able to see followers when logged out"""
+
+        with self.client as c:
+
             resp = c.get("/users/1/following", follow_redirects=True)
             data = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Access unauthorized", data)
+
+    def test_see_followers(self):
+        """We should be able to see followers when logged in"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                with app.app_context():
+                    testuser = User.query.first()
+                    print(testuser.id)
+                    print(testuser.username)
+                    sess[CURR_USER_KEY] = testuser.id
+
+            resp = c.get("/users/1/following")
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("testfollowing", data)
+
+
+    def test_see_following(self):
+        """We should be able to see following when logged in"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                with app.app_context():
+                    testuser = User.query.first()
+                    print(testuser.id)
+                    print(testuser.username)
+                    sess[CURR_USER_KEY] = testuser.id
+
+            resp = c.get("/users/1/followers")
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("testfollower", data)
