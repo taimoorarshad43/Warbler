@@ -64,6 +64,20 @@ class MessageViewTestCase(TestCase):
                                         email="test@test.com",
                                         password="testuser",
                                         image_url=None)
+            
+            self.testfollowing = User.signup(username="testfollowing",
+                                        email="following@test.com",
+                                        password="testuser",
+                                        image_url=None)
+            
+            self.testfollower = User.signup(username="testfollower",
+                                        email="follower@test.com",
+                                        password="testuser",
+                                        image_url=None)
+
+            # Setting up diifferent followers and following for test user
+            self.testuser.following.append(self.testfollower)
+            self.testfollower.following.append(self.testuser)
 
             db.session.commit()
     
@@ -76,6 +90,17 @@ class MessageViewTestCase(TestCase):
         with app.app_context():
             db.drop_all()
             db.session.rollback()
+
+    def test_loggedout_visit_homepage(self):
+        """We should get the anon homepage when logged out"""
+
+        with self.client as c:
+
+            resp = c.get("/")
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("New to Warbler?", data)
 
     def test_loggedout_see_followers(self):
         """We should not be able to see followers when logged out"""
