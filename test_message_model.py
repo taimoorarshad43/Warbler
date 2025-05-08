@@ -96,3 +96,50 @@ class MessageViewTestCase(TestCase):
         with app.app_context():
             db.drop_all()
             db.session.rollback()
+
+    def test_existing_messages(self):
+        """Does the message exist in the database?"""
+
+        with self.client as c:
+            with app.app_context():
+                message = Message.query.get(1)
+                testfollowing = User.query.get(2)
+                self.assertIsNotNone(message)
+                self.assertEqual(message.text, "test message 1")
+                self.assertEqual(message.user_id, testfollowing.id)
+
+    def test_add_message(self):
+        """ Can we add a message?"""
+
+        # Since we need to change the session to mimic logging in,
+        # we need to use the changing-session trick:
+
+        with self.client as c:
+            with app.app_context():
+
+                newmessage = Message(text="Hello")
+                testuser = User.query.first() # That should get us testuser
+                testuser.messages.append(newmessage)
+
+                db.session.commit()
+
+                messages = Message.query.all()
+
+                self.assertEqual(len(messages), 3)
+                self.assertEqual(messages[2].text, "Hello")
+                self.assertEqual(messages[2].user_id, testuser.id)
+                self.assertEqual(testuser.messages[0].text, "Hello")
+
+    def test_delete_message(self):
+        """Can we delete a message?"""
+
+        with self.client as c:
+            with app.app_context():
+                message = Message.query.get(1)
+                db.session.delete(message)
+                db.session.commit()
+
+                messages = Message.query.all()
+
+                self.assertEqual(len(messages), 1)
+                self.assertEqual(messages[0].text, "test message 2")
