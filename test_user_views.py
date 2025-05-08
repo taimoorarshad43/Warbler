@@ -2,7 +2,7 @@
 
 # run these tests like:
 #
-#    FLASK_ENV=production python -m unittest test_message_views.py
+#    FLASK_ENV=production python -m unittest test_user_views.py
 
 
 import os
@@ -74,6 +74,12 @@ class MessageViewTestCase(TestCase):
                                         email="follower@test.com",
                                         password="testuser",
                                         image_url=None)
+            
+            # Setting up messages for test follower and test following
+            testmessage1 = Message(text="test message 1")
+            testmessage2 = Message(text="test message 2")
+            self.testfollowing.messages.append(testmessage1)
+            self.testfollower.messages.append(testmessage2)
 
             # Setting up diifferent followers and following for test user
             self.testuser.following.append(self.testfollowing)
@@ -90,6 +96,25 @@ class MessageViewTestCase(TestCase):
         with app.app_context():
             db.drop_all()
             db.session.rollback()
+
+    def test_loggedin_visit_homepage(self):
+        """We should get the logged in homepage when logged in"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                with app.app_context():
+                    testuser = User.query.first()
+                    print(testuser.id)
+                    print(testuser.username)
+                    sess[CURR_USER_KEY] = testuser.id
+
+
+            resp = c.get("/")
+            data = resp.get_data(as_text=True)
+
+            # We should see a message from someone we follow
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("test message 1", data)
 
     def test_loggedout_visit_homepage(self):
         """We should get the anon homepage when logged out"""
