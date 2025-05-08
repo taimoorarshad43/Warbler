@@ -183,3 +183,19 @@ class MessageViewTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn("testfollower", data)
+
+    def test_see_other_user(self):
+        """We should be able to see other users' profiles"""
+
+        with self.client as c:
+
+            resp = c.get("/users/2")
+            data = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("testfollowing", data)
+
+
+            resp = c.get("/users/3")
+            data = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("testfollower", data)
