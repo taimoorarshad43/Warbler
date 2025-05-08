@@ -149,8 +149,10 @@ class MessageViewTestCase(TestCase):
                 self.assertEqual(len(user.followers), 1)
                 self.assertEqual(len(user.following), 1)
 
-    def test_testuser_follows_testfollows(self):
-        "Does testuser.is_following() work with testfollows user?"
+    def test_testuser_isfollowing_testfollows(self):
+        """
+        Does testuser.is_following() work with testfollows user?
+        """
 
         with self.client as c:
             with app.app_context():
@@ -158,13 +160,45 @@ class MessageViewTestCase(TestCase):
                 testfollowing = User.query.get(2)
                 self.assertEqual(testuser.is_following(testfollowing), True)
 
-    def test_testuser_isfollower_testfollower(self):
+    def test_testuser_isfollowedby_testfollower(self):
 
-        "Does testuser.is_followed_by() work with testfollower user?"
+        """
+        Does testuser.is_followed_by() work with testfollower user?
+        """
 
         with self.client as c:
             with app.app_context():
                 testuser = User.query.get(1)
                 testfollower = User.query.get(3)
                 self.assertEqual(testuser.is_followed_by(testfollower), True)
-        
+
+
+    def test_testuser_not_following_testfollows(self):
+        """
+        Does testuser.is_following() return False when testfollows unfollows?
+        """
+
+        with self.client as c:
+            with app.app_context():
+                testuser = User.query.get(1)
+                testfollowing = User.query.get(2)
+
+                testuser.following.remove(testfollowing)
+                self.assertEqual(testuser.is_following(testfollowing), False)
+
+    def test_testuser_not_followedby_testfollower(self):
+
+        """
+        Does testuser.is_followed_by() work with testfollower user?
+        """
+
+        with self.client as c:
+            with app.app_context():
+                testuser = User.query.get(1)
+                testfollower = User.query.get(3)
+
+                testuser.followers.remove(testfollower)
+
+                self.assertEqual(testuser.is_followed_by(testfollower), False)
+
+
