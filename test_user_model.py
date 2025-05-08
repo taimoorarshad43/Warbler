@@ -201,4 +201,54 @@ class MessageViewTestCase(TestCase):
 
                 self.assertEqual(testuser.is_followed_by(testfollower), False)
 
+    def test_user_signup(self):
+        """Does user signup work?"""
+
+        with self.client as c:
+            with app.app_context():
+                u = User.signup(username="signuptestuser",
+                                email="signup@test.com",
+                                password="signupuser",
+                                image_url=None)
+                db.session.commit()
+
+                # We should be able to query and find this user
+
+                user = User.query.get(u.id)
+                self.assertEqual(user.username, "signuptestuser")
+
+    def test_user_authentication(self):
+        """Does user authentication work?"""
+
+        with self.client as c:
+            with app.app_context():
+                u = User.authenticate(username="testuser",
+                                password="testuser")
+                
+                # That should have returned an authenticated user
+                self.assertEqual(u.username, "testuser")
+
+    def test_user_authentication_fail_username(self):
+        """Does user authentication fail when we use wrong username?"""
+
+        with self.client as c:
+            with app.app_context():
+                u = User.authenticate(username="wrongusername",
+                                password="testuser")
+                
+                # That should have returned None
+                self.assertEqual(u, False)
+
+
+    def test_user_authentication_fail_password(self):
+        """Does user authentication fail when we use wrong password?"""
+
+        with self.client as c:
+            with app.app_context():
+                u = User.authenticate(username="testuser",
+                                password="wrongpassword")
+                
+                # That should have returned None
+                self.assertEqual(u, False)
+
 
