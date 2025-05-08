@@ -100,10 +100,8 @@ class MessageViewTestCase(TestCase):
 
         with self.client as c:
             with c.session_transaction() as sess:
-                # sess[CURR_USER_KEY] = self.testuser.id
                 with app.app_context():
                     testuser = User.query.first()
-                    print(testuser)
                     sess[CURR_USER_KEY] = testuser.id
 
             # Now, that session setting is saved, so we can have
@@ -124,7 +122,6 @@ class MessageViewTestCase(TestCase):
 
         with self.client as c:
             with c.session_transaction() as sess:
-                # sess[CURR_USER_KEY] = self.testuser.id
                 with app.app_context():
                     testuser = User.query.first()
                     print(testuser)
@@ -143,27 +140,6 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Test Message", data)
 
-    # def test_visit_homepage(self):
-    #     """Can use visit the homepage?"""
-
-    #     with app.test_client() as c:
-    #         with c.session_transaction() as sess:
-    #             # sess[CURR_USER_KEY] = self.testuser.id
-    #             with app.app_context():
-    #                 testuser = User.query.first()
-    #                 print(testuser)
-    #                 sess[CURR_USER_KEY] = testuser.id
-
-    #         # Now, that session setting is saved, so we can have
-    #         # the rest of ours test
-
-    #         resp = c.get('/')
-    #         data = resp.get_data(as_text=True)
-    #         # print(data)
-
-    #         self.assertEqual(resp.status_code, 200)
-    #         self.assertIn("Warbler", data)
-
     def test_loggedout_visit_message(self):
         """Are we disallowed to make a new message when logged out?"""
 
@@ -175,27 +151,55 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Access unauthorized.", data)
 
-    def test_loggedout_visit_homepage(self):
-        """We should get the anon homepage when logged out"""
+    def test_delete_message(self):
+        """Are we allowed to delete a message when logged in?"""
 
         with self.client as c:
+            with c.session_transaction() as sess:
+                with app.app_context():
+                    testuser = User.query.first()
+                    print(testuser.username)
+                    sess[CURR_USER_KEY] = testuser.id
 
-            resp = c.get("/")
+            # Log in to create message
+            c.post("/messages/new", data={"text": "Test Message"})
+
+            msg = Message.query.first()
+            print(msg.id)
+
+            resp = c.post(f"/messages/{msg.id}/delete", follow_redirects=True)
             data = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("New to Warbler?", data)
+            self.assertIn("testuser", data)
 
-    def test_loggedout_see_followers(self):
-        """We should be able to see followers when logged out"""
+    def test_loggedout_delete_message(self):
+        """Are we disallowed to delete a message when logged out?"""
 
         with self.client as c:
+            with c.session_transaction() as sess:
+                with app.app_context():
+                    testuser = User.query.first()
+                    print(testuser.username)
+                    sess[CURR_USER_KEY] = testuser.id
 
-            resp = c.get("/users/1")
+            # Log in to create message
+            c.post("/messages/new", data={"text": "Test Message"})
+
+            msg = Message.query.first()
+            print(msg.id)
+
+            # Logging the user out
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = None
+
+            resp = c.post(f"/messages/{msg.id}/delete", follow_redirects=True)
             data = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("Followers", data)
+            self.assertIn("Access unauthorized.", data)
+
+
 
 
 
