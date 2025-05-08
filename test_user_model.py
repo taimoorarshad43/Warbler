@@ -58,6 +58,7 @@ class MessageViewTestCase(TestCase):
             db.create_all()
             User.query.delete()
             Message.query.delete()
+            Follows.query.delete()
 
             self.client = app.test_client()
 
