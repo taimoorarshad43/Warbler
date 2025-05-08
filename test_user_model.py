@@ -7,6 +7,8 @@
 
 import os
 from unittest import TestCase
+from sqlalchemy.exc import IntegrityError
+
 
 from models import db, Message, User, Follows
 
@@ -97,15 +99,46 @@ class MessageViewTestCase(TestCase):
     def test_user_model(self):
         """Does basic model work?"""
 
-        u = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
-        )
+        with self.client as c:
+            with app.app_context():
+                u = User(
+                    email="anothertest@test.com",
+                    username="anothertestuser",
+                    password="HASHED_PASSWORD"
+                )
+                db.session.add(u)
+                db.session.commit()
 
-        db.session.add(u)
-        db.session.commit()
+                # User should have no messages & no followers
+                self.assertEqual(len(u.messages), 0)
+                self.assertEqual(len(u.followers), 0)
 
-        # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
+    def test_not_unique_user_model(self):
+        """Do we get an error when we try and add an already existing user?"""
+
+        with self.client as c:
+            with app.app_context():
+                u = User(
+                    email="test@test.com",
+                    username="testuser",
+                    password="HASHED_PASSWORD"
+                )
+
+                db.session.add(u)
+
+                # We should get an integrity error
+                with self.assertRaises(IntegrityError):
+                    db.session.commit()
+
+    def test_testuser_follows(self):
+        """
+        Does testuser have followers and follows?
+        """
+        with self.client as c:
+            with app.app_context():
+
+                # This should be the testuser we made earlier.
+                user = User.query.get(1)
+
+                self.assertEqual(len(user.followers), 1)
+                self.assertEqual(len(user.following), 1)
