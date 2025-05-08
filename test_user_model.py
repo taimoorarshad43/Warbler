@@ -79,9 +79,15 @@ class MessageViewTestCase(TestCase):
                                         password="testuser",
                                         image_url=None)
 
+            # Setting up messages for test follower and test following
+            testmessage1 = Message(text="test message 1")
+            testmessage2 = Message(text="test message 2")
+            self.testfollowing.messages.append(testmessage1)
+            self.testfollower.messages.append(testmessage2)
+
             # Setting up diifferent followers and following for test user
-            self.testuser.following.append(self.testfollower)
-            self.testfollower.following.append(self.testuser)
+            self.testuser.following.append(self.testfollowing)
+            self.testuser.followers.append(self.testfollower)
 
             db.session.commit()
     
@@ -142,3 +148,5 @@ class MessageViewTestCase(TestCase):
 
                 self.assertEqual(len(user.followers), 1)
                 self.assertEqual(len(user.following), 1)
+
+    # def test_testuser_follows_
