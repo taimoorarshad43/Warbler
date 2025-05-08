@@ -56,6 +56,7 @@ class MessageViewTestCase(TestCase):
             db.create_all()
             User.query.delete()
             Message.query.delete()
+            Follows.query.delete()
 
             self.client = app.test_client()
 
@@ -74,9 +75,15 @@ class MessageViewTestCase(TestCase):
                                         password="testuser",
                                         image_url=None)
 
+            # Setting up messages for test follower and test following
+            testmessage1 = Message(text="test message 1")
+            testmessage2 = Message(text="test message 2")
+            self.testfollowing.messages.append(testmessage1)
+            self.testfollower.messages.append(testmessage2)
+
             # Setting up diifferent followers and following for test user
-            self.testuser.following.append(self.testfollower)
-            self.testfollower.following.append(self.testuser)
+            self.testuser.following.append(self.testfollowing)
+            self.testuser.followers.append(self.testfollower)
 
             db.session.commit()
     
