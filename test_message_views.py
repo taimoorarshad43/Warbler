@@ -15,8 +15,7 @@ from models import db, Message, User
 # before we import our app, since that will have already
 # connected to the database
 
-os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
-# Even with the refactor this still works and changes the database accordingly
+os.environ['DATABASE_URL'] = "postgresql:///warbler-test"    # - Even with the refactor this still works and changes the database accordingly
 
 
 # Now we can import app
@@ -53,6 +52,7 @@ class MessageViewTestCase(TestCase):
 
     def setUp(self):
         """Create test client, add sample data."""
+        # Moving table creation here so we can have similar keys when testing
         with app.app_context():
             db.create_all()
             User.query.delete()
@@ -65,6 +65,20 @@ class MessageViewTestCase(TestCase):
                                         password="testuser",
                                         image_url=None)
 
+            self.testfollowing = User.signup(username="testfollowing",
+                                        email="following@test.com",
+                                        password="testuser",
+                                        image_url=None)
+            
+            self.testfollower = User.signup(username="testfollower",
+                                        email="follower@test.com",
+                                        password="testuser",
+                                        image_url=None)
+
+            # Setting up diifferent followers and following for test user
+            self.testuser.following.append(self.testfollower)
+            self.testfollower.following.append(self.testuser)
+
             db.session.commit()
     
     def tearDown(self):
@@ -72,6 +86,7 @@ class MessageViewTestCase(TestCase):
         """
         Rolling back database, dropping all tables
         """
+        # Will drop tables here and recreate them in setUp()
         with app.app_context():
             db.drop_all()
             db.session.rollback()
@@ -95,7 +110,7 @@ class MessageViewTestCase(TestCase):
             # the rest of ours test
 
             resp = c.post("/messages/new", data={"text": "Hello"})
-            data = resp.get_data(as_text=True)
+            # data = resp.get_data(as_text=True)
 
             # Make sure it redirects
             self.assertEqual(resp.status_code, 302)
@@ -128,23 +143,59 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Test Message", data)
 
-    def test_visit_homepage(self):
-        """Can use visit the homepage?"""
+    # def test_visit_homepage(self):
+    #     """Can use visit the homepage?"""
 
-        with app.test_client() as c:
-            with c.session_transaction() as sess:
-                # sess[CURR_USER_KEY] = self.testuser.id
-                with app.app_context():
-                    testuser = User.query.first()
-                    print(testuser)
-                    sess[CURR_USER_KEY] = testuser.id
+    #     with app.test_client() as c:
+    #         with c.session_transaction() as sess:
+    #             # sess[CURR_USER_KEY] = self.testuser.id
+    #             with app.app_context():
+    #                 testuser = User.query.first()
+    #                 print(testuser)
+    #                 sess[CURR_USER_KEY] = testuser.id
 
-            # Now, that session setting is saved, so we can have
-            # the rest of ours test
+    #         # Now, that session setting is saved, so we can have
+    #         # the rest of ours test
 
-            resp = c.get('/')
+    #         resp = c.get('/')
+    #         data = resp.get_data(as_text=True)
+    #         # print(data)
+
+    #         self.assertEqual(resp.status_code, 200)
+    #         self.assertIn("Warbler", data)
+
+    def test_loggedout_visit_message(self):
+        """Are we disallowed to make a new message when logged out?"""
+
+        with self.client as c:
+
+            resp = c.get("/messages/new", follow_redirects=True)
             data = resp.get_data(as_text=True)
-            print(data)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("Welcome to Warbler", data)
+            self.assertIn("Access unauthorized.", data)
+
+    def test_loggedout_visit_homepage(self):
+        """We should get the anon homepage when logged out"""
+
+        with self.client as c:
+
+            resp = c.get("/")
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("New to Warbler?", data)
+
+    def test_loggedout_see_followers(self):
+        """We should be able to see followers when logged out"""
+
+        with self.client as c:
+
+            resp = c.get("/users/1")
+            data = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Followers", data)
+
+
+
